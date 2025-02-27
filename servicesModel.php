@@ -6,43 +6,58 @@ require 'vendor/phpmailer/phpmailer/src/Exception.php';
 require 'vendor/phpmailer/phpmailer/src/PHPMailer.php';
 require 'vendor/phpmailer/phpmailer/src/SMTP.php';
 
-class EmailService {
-    public function sendEmail($name, $email, $findus, $actualWeb = null, $budget, $goalWeb, $anyelse = null) {
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+header("Content-Type: application/json");
+
+class ServicesModel {
+    public function sendEmail($data) {
         $mail = new PHPMailer(true);
+        
         try {
+            // Configuración del servidor SMTP
             $mail->isSMTP();
             $mail->Host       = 'smtp.gmail.com';
             $mail->SMTPAuth   = true;
             $mail->Username   = 'raymondragon8@gmail.com'; // Cambiar por tu email
-            $mail->Password   = 'qprr zrsg tdtz uxhq'; // Cambiar por tu contraseña de aplicación
+            $mail->Password   = 'jtno gpsj lyxj npuv'; // Cambiar por tu contraseña de aplicación
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port       = 587;
+            $mail->SMTPKeepAlive = true;
 
-            // Destinatarios
-            $mail->setFrom('raymondragon8@gmail.com', 'Ray Mondragon');
-            $mail->addAddress('destinatario@gmail.com', 'Destinatario');
+            // Remitente y destinatario
+            $mail->setFrom($data['email'], $data['name']);
+            $mail->addAddress('raymondragon8@gmail.com', 'Ray Mondragon');
 
-            // Contenido del email
+            // Configuración del contenido del correo
             $mail->isHTML(true);
-            $mail->Subject = "Nuevo mensaje de contacto";
-            $mail->Body = "
-                <h3>Hola, soy {$name}</h3>
-                <p><strong>Email:</strong> {$email}</p>
-                <p><strong>¿Cómo nos encontró?:</strong> {$findus}</p>
-                <p><strong>Web actual:</strong> " . ($actualWeb ? $actualWeb : 'No proporcionada') . "</p>
-                <p><strong>Presupuesto:</strong> {$budget}</p>
-                <p><strong>Objetivo para la web:</strong> {$goalWeb}</p>
-                <p><strong>Otros comentarios:</strong></p>
-                <p>" . nl2br($anyelse ? $anyelse : 'No proporcionado') . "</p>
-            ";
-
-            if ($mail->send()) {
-                return ['success', 'Mensaje enviado'];
-            } else {
-                return ['error', 'Error al enviar el mensaje'];
+            $mail->Subject = 'Cliente interesado en un Sitio Web';
+            
+            // Construcción del cuerpo del correo
+            $body = '<div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; max-width: 500px;">
+                        <h2 style="color: #333; border-bottom: 2px solid #007BFF; padding-bottom: 10px;">Detalles del Cliente</h2>
+                        <p><strong>Nombre:</strong> ' . htmlspecialchars($data['name']) . '</p>
+                        <p><strong>Email:</strong> <a href="mailto:' . htmlspecialchars($data['email']) . '" style="color: #007BFF;">' . htmlspecialchars($data['email']) . '</a></p>
+                        <p><strong>¿Cómo nos encontró?:</strong> ' . htmlspecialchars($data['findus']) . '</p>
+                        <p><strong>Presupuesto:</strong> ' . htmlspecialchars($data['budget']) . '</p>
+                        <p><strong>Objetivo Web:</strong> ' . nl2br(htmlspecialchars($data['goalWeb'])) . '</p>';
+            
+            // Atributos opcionales
+            if (!empty($data['actualWeb'])) {
+                $body .= '<p><strong>Sitio Web Actual:</strong> ' . htmlspecialchars($data['actualWeb']) . '</p>';
             }
+            if (!empty($data['anyelse'])) {
+                $body .= '<p><strong>Comentarios adicionales:</strong> ' . nl2br(htmlspecialchars($data['anyelse'])) . '</p>';
+            }
+            
+            $body .= '</div>';
+            $mail->Body = $body;
+            
+            // Envío del correo
+            $mail->send();
+            return ["success", "Mensaje enviado"];
         } catch (Exception $e) {
-            return ['error', "Error al enviar el mensaje: {$mail->ErrorInfo}"];
+            return ["error", "Error al enviar el correo: " . $mail->ErrorInfo];
         }
     }
 }
